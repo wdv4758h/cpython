@@ -388,7 +388,7 @@ def _make_key(args, kwds, typed,
         return key[0]
     return _HashedSeq(key)
 
-def lru_cache(maxsize=128, typed=False):
+def lru_cache(maxsize=128, typed=False, cache=None):
     """Least-recently-used cache decorator.
 
     If *maxsize* is set to None, the LRU features are disabled and the cache
@@ -420,18 +420,20 @@ def lru_cache(maxsize=128, typed=False):
         raise TypeError('Expected maxsize to be an integer or None')
 
     def decorating_function(user_function):
-        wrapper = _lru_cache_wrapper(user_function, maxsize, typed, _CacheInfo)
+        wrapper = _lru_cache_wrapper(user_function, maxsize, typed, _CacheInfo, cache)
         return update_wrapper(wrapper, user_function)
 
     return decorating_function
 
-def _lru_cache_wrapper(user_function, maxsize, typed, _CacheInfo):
+def _lru_cache_wrapper(user_function, maxsize, typed, _CacheInfo, cache):
     # Constants shared by all lru cache instances:
     sentinel = object()          # unique object used to signal cache misses
     make_key = _make_key         # build a key from the function arguments
     PREV, NEXT, KEY, RESULT = 0, 1, 2, 3   # names for the link fields
 
-    cache = {}
+    if cache is None:
+        cache = {}
+
     hits = misses = 0
     full = False
     cache_get = cache.get    # bound method to lookup a key or return None

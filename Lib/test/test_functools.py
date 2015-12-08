@@ -1113,6 +1113,25 @@ class TestLRU:
         for attr in self.module.WRAPPER_ASSIGNMENTS:
             self.assertEqual(getattr(g, attr), getattr(f, attr))
 
+    def test_lru_cache_with_specified_cache(self):
+        cache = {}
+
+        @self.module.lru_cache(maxsize=None, cache=cache)
+        def f(n):
+            return n
+
+        data = (42, "test", (55, 66))
+
+        for i in data:
+            f(i)
+
+        # modify cache data to make sure it use our cachedict
+        for i in cache.keys():
+            cache[i] *= 2
+
+        for i in data:
+            self.assertEqual(f(i), i*2)
+
     @unittest.skipUnless(threading, 'This test requires threading.')
     def test_lru_cache_threaded(self):
         n, m = 5, 11

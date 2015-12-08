@@ -1,4 +1,3 @@
-
 #include "Python.h"
 #include "structmember.h"
 
@@ -913,17 +912,17 @@ bounded_lru_cache_wrapper(lru_cache_object *self, PyObject *args, PyObject *kwds
 static PyObject *
 lru_cache_new(PyTypeObject *type, PyObject *args, PyObject *kw)
 {
-    PyObject *func, *maxsize_O, *cache_info_type, *cachedict;
+    PyObject *func, *maxsize_O, *cache_info_type, *cachedict = NULL;
     int typed;
     lru_cache_object *obj;
     Py_ssize_t maxsize;
     PyObject *(*wrapper)(lru_cache_object *, PyObject *, PyObject *);
     static char *keywords[] = {"user_function", "maxsize", "typed",
-                               "cache_info_type", NULL};
+                               "cache_info_type", "cachedict", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kw, "OOpO:lru_cache", keywords,
+    if (!PyArg_ParseTupleAndKeywords(args, kw, "OOpOO:lru_cache", keywords,
                                      &func, &maxsize_O, &typed,
-                                     &cache_info_type)) {
+                                     &cache_info_type, &cachedict)) {
         return NULL;
     }
 
@@ -951,8 +950,13 @@ lru_cache_new(PyTypeObject *type, PyObject *args, PyObject *kw)
         return NULL;
     }
 
-    if (!(cachedict = PyDict_New()))
-        return NULL;
+    if (cachedict == NULL || cachedict == Py_None) {
+        if (!(cachedict = PyDict_New()))
+            return NULL;
+    } else {
+        Py_INCREF(cachedict);
+    }
+
 
     obj = (lru_cache_object *)type->tp_alloc(type, 0);
     if (obj == NULL) {
